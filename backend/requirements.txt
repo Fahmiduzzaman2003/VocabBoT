@@ -1,6 +1,8 @@
-fastapi
-uvicorn[standard]
-python-dotenv
-openai
-google-genai
-mistralai
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
+python-dotenv>=1.0,<2.0
+
+# Providers. mistralai 2.x exposes the SDK at `mistralai.client`.
+mistralai>=2.0,<3.0
+google-genai>=2.0,<3.0
+openai>=1.40,<4.0

@@ -3,22 +3,120 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GRE Vocabulary Coach</title>
+    <title>VocabVerse | GRE Vocabulary Studio</title>
+    <meta name="description" content="Learn GRE vocabulary with meanings, nuance, examples, memory tricks and practice questions." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="container">
-        <h1>GRE Vocabulary Coach</h1>
-        <p class="subtitle">Enter a GRE word and learn it properly.</p>
+    <div class="aurora" aria-hidden="true">
+        <span class="orb orb-1"></span>
+        <span class="orb orb-2"></span>
+        <span class="orb orb-3"></span>
+    </div>
 
-        <div class="search-box">
-            <input id="wordInput" type="text" placeholder="Enter a GRE word..." />
-            <button id="learnBtn" type="button">Learn</button>
-        </div>
+    <div class="page-shell">
+        <header class="topbar">
+            <div class="brand-wrap">
+                <div class="brand-mark" aria-hidden="true">V</div>
+                <div>
+                    <div class="brand-name">VocabVerse</div>
+                    <div class="brand-tag">GRE mastery studio</div>
+                </div>
+            </div>
 
-        <div id="loading">Thinking...</div>
-        <div id="error"></div>
-        <div id="result"></div>
+            <div class="top-actions">
+                <div class="status" id="status" title="Backend status">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">Connecting…</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="container">
+            <section class="hero" id="hero">
+                <div class="hero-copy">
+                    <span class="eyebrow">Vocabulary learning platform</span>
+                    <h1>Build a sharper GRE vocabulary, <em>one word at a time.</em></h1>
+                    <p>Meaning, nuance, etymology, collocations, memory tricks and a practice question — for any word you type.</p>
+                </div>
+
+                <div class="hero-panel" id="statsPanel">
+                    <div class="stat-card">
+                        <span class="stat-label">Words explored</span>
+                        <strong id="statWords">0</strong>
+                        <span class="stat-foot" id="statWordsFoot">Start your first lookup</span>
+                    </div>
+                    <div class="stat-card cyan">
+                        <span class="stat-label">Quiz accuracy</span>
+                        <strong id="statAccuracy">—</strong>
+                        <span class="stat-foot" id="statAccuracyFoot">No attempts yet</span>
+                    </div>
+                    <div class="stat-card warm">
+                        <span class="stat-label">Day streak</span>
+                        <strong id="statStreak">0</strong>
+                        <span class="stat-foot" id="statStreakFoot">Come back tomorrow</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="search-card">
+                <form class="input-wrap" id="searchForm" autocomplete="off">
+                    <div class="input-field">
+                        <svg class="input-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                        <input id="wordInput" type="text" placeholder="Search a GRE word…" aria-label="Vocabulary word" maxlength="50" spellcheck="false" />
+                        <kbd class="hint-key" id="hintKey">/</kbd>
+                    </div>
+                    <button id="learnBtn" type="submit" class="btn-primary">
+                        <span class="btn-label">Learn</span>
+                        <span class="spinner" aria-hidden="true"></span>
+                    </button>
+                    <button id="randomBtn" type="button" class="btn-ghost" title="Try a random GRE word">Surprise me</button>
+                </form>
+
+                <div class="chips-row" id="recentRow" hidden>
+                    <span class="chips-label">Recent</span>
+                    <div class="chips" id="recentChips"></div>
+                    <button type="button" class="link-btn" id="clearRecent">Clear</button>
+                </div>
+            </section>
+
+            <div id="error" class="alert" role="alert" hidden></div>
+
+            <section id="emptyState" class="empty-state">
+                <h2>Not sure where to start?</h2>
+                <p>Pick a word below, or type any English word you want to master.</p>
+                <div class="starter-groups" id="starterGroups"></div>
+            </section>
+
+            <div id="skeleton" class="skeleton-card" hidden aria-hidden="true">
+                <div class="sk sk-title"></div>
+                <div class="sk sk-line"></div>
+                <div class="sk sk-line short"></div>
+                <div class="sk-grid">
+                    <div class="sk sk-block"></div>
+                    <div class="sk sk-block"></div>
+                </div>
+            </div>
+
+            <div id="result" aria-live="polite"></div>
+
+            <section class="saved-panel" id="savedPanel" hidden>
+                <div class="saved-head">
+                    <h2>Saved words</h2>
+                    <span class="count-badge" id="savedCount">0</span>
+                </div>
+                <div class="chips" id="savedChips"></div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <span>VocabVerse — GRE vocabulary studio</span>
+            <span id="footerProvider"></span>
+        </footer>
     </div>
 
     <script src="app.js" defer></script>
