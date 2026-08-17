@@ -1,0 +1,45 @@
+# Render Blueprint - deploys the FastAPI backend.
+# Create it with: Render Dashboard -> New -> Blueprint -> pick this repo.
+#
+# The backend also serves the frontend from /, so this service alone is a
+# complete working deployment. Vercel is optional (see vercel.json) and just
+# puts the UI on a faster CDN in front of it.
+
+services:
+  - type: web
+    name: vocabbot-api
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+
+    buildCommand: pip install --upgrade pip && pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+
+    healthCheckPath: /api/health
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+
+      # Which provider to try first. The app falls back to the others.
+      - key: LLM_PROVIDER
+        value: mistral
+
+      # sync: false = Render prompts for the value and stores it as a secret.
+      # Never put real keys in this file; it is committed to the repo.
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: MISTRAL_MODEL
+        value: mistral-small-latest
+
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.6-flash
+
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: openrouter/auto

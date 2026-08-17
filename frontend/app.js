@@ -3,9 +3,14 @@
 (function () {
     "use strict";
 
-    // When the page is served by the FastAPI app we are same-origin. When it is
-    // opened straight from disk (file://) fall back to the local dev server.
-    var API_BASE = location.protocol === "file:" ? "http://127.0.0.1:8000" : "";
+    // Where to send API calls, in priority order:
+    //   1. <meta name="api-base"> - set this when the frontend is hosted
+    //      separately from the backend (e.g. Vercel calling Render directly).
+    //   2. file:// - opened from disk, so assume the local dev server.
+    //   3. same origin - FastAPI serving the UI, or a Vercel /api rewrite.
+    var META_BASE = (document.querySelector('meta[name="api-base"]') || {}).content || "";
+    var API_BASE = META_BASE.replace(/\/+$/, "") ||
+                   (location.protocol === "file:" ? "http://127.0.0.1:8000" : "");
 
     var STORE_KEY = "vocabverse.v1";
     var MAX_RECENT = 12;
@@ -41,6 +46,7 @@
     var errorBox = $("error");
     var resultBox = $("result");
     var skeleton = $("skeleton");
+    var waitNote = $("waitNote");
     var emptyState = $("emptyState");
     var hero = $("hero");
     var recentRow = $("recentRow");
@@ -251,13 +257,24 @@
     // networking
     // ---------------------------------------------------------------
 
+    var waitTimer = null;
+
     function setLoading(on) {
         isLoading = on;
         learnBtn.disabled = on;
         learnBtn.classList.toggle("loading", on);
         learnBtn.querySelector(".btn-label").textContent = on ? "Thinking" : "Learn";
         skeleton.hidden = !on;
-        if (on) resultBox.replaceChildren();
+
+        clearTimeout(waitTimer);
+        waitNote.hidden = true;
+
+        if (on) {
+            resultBox.replaceChildren();
+            // A sleeping free-tier backend can take ~50s to answer the first
+            // request; say so rather than spinning silently.
+            waitTimer = setTimeout(function () { waitNote.hidden = false; }, 6000);
+        }
     }
 
     function showError(message) {

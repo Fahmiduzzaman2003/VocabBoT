@@ -37,6 +37,39 @@ is nothing else to start.
 Successful lookups are cached in memory (128 most recent words), so repeat
 lookups are instant and cost nothing.
 
+## Deploy
+
+### Render (backend — this alone is a complete deployment)
+
+`render.yaml` is a Blueprint. In Render: **New → Blueprint → pick this repo**.
+It will prompt for `MISTRAL_API_KEY`, `GEMINI_API_KEY` and `OPENROUTER_API_KEY`
+(marked `sync: false`, so they're stored as secrets, never committed). Leave
+blank any provider you don't use — one key is enough.
+
+Because FastAPI also serves the frontend, `https://<your-app>.onrender.com/`
+is the working app. You can stop here.
+
+### Vercel (optional — puts the UI on a CDN)
+
+`vercel.json` serves `frontend/` as a static site and proxies `/api/*` to
+Render, so the browser sees one origin and no CORS is involved.
+
+1. Edit `vercel.json` and replace `REPLACE-WITH-YOUR-RENDER-URL` with your
+   real Render hostname.
+2. Import the repo in Vercel and deploy. No build step, no env vars.
+
+**Cold starts:** Render's free tier sleeps after ~15 minutes idle and can take
+close to a minute to wake. Vercel's proxy times out before that, so a first
+request through Vercel may fail while the same request straight to Render just
+takes a while. If that bites you, skip the rewrite and point the frontend at
+Render directly — set the API base in `frontend/index.html`:
+
+```html
+<meta name="api-base" content="https://your-app.onrender.com" />
+```
+
+CORS is already open on the backend, so this works with no other change.
+
 ## Notes
 
 - `/?word=ephemeral` deep-links straight to a word.

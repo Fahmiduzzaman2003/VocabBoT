@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>VocabVerse | GRE Vocabulary Studio</title>
     <meta name="description" content="Learn GRE vocabulary with meanings, nuance, examples, memory tricks and practice questions." />
+    <!-- Where the API lives. Empty = same origin (local dev, Render, or a
+         Vercel deploy that proxies /api via a rewrite). Set it to the full
+         backend URL (e.g. https://vocabbot-api.onrender.com) to call it
+         directly instead. -->
+    <meta name="api-base" content="" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -93,6 +98,10 @@
             </section>
 
             <div id="skeleton" class="skeleton-card" hidden aria-hidden="true">
+                <p class="wait-note" id="waitNote" hidden>
+                    Waking the server up — free hosting sleeps when idle, so the
+                    first lookup can take up to a minute.
+                </p>
                 <div class="sk sk-title"></div>
                 <div class="sk sk-line"></div>
                 <div class="sk sk-line short"></div>
