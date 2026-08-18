@@ -37,6 +37,27 @@ is nothing else to start.
 Successful lookups are cached in memory (128 most recent words), so repeat
 lookups are instant and cost nothing.
 
+## The word bank
+
+`frontend/words.json` is the GRE list the **Word bank** button browses. It is
+generated from the PDF in two steps:
+
+```bash
+python backend/pdftoword.py     # PDF -> backend/words.json (raw dump)
+python backend/clean_words.py   # raw -> frontend/words.json (cleaned)
+```
+
+The raw dump needs cleaning because the PDF is laid out in columns, so pypdf
+glues adjacent entries together (`approbationclangor` = `approbation` +
+`clangor`). Those words only ever appear glued, so the list can't serve as its
+own dictionary — `clean_words.py` asks the configured LLM to split them and
+then **verifies every split by re-joining the parts and checking they reproduce
+the original token exactly**, so a bad split cannot get through. It also drops
+page numbers, URLs and header boilerplate.
+
+Result: 1011 raw tokens → **1100 clean words**, 158 of them recovered by
+splitting.
+
 ## Deploy
 
 ### Render (backend — this alone is a complete deployment)

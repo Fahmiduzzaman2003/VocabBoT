@@ -15,17 +15,46 @@
     var STORE_KEY = "vocabverse.v1";
     var MAX_RECENT = 12;
 
-    var WORD_BANK = [
-        "ephemeral", "ubiquitous", "laconic", "perfunctory", "obdurate", "garrulous",
-        "intransigent", "sycophant", "equivocate", "pellucid", "quixotic", "recalcitrant",
-        "sanguine", "taciturn", "venerate", "zealot", "abstruse", "belie", "cacophony",
-        "dearth", "ebullient", "fastidious", "gregarious", "hackneyed", "iconoclast",
-        "juxtapose", "lethargic", "magnanimous", "nefarious", "obsequious", "paragon",
-        "quiescent", "rescind", "salient", "truculent", "unequivocal", "vacillate",
-        "wanton", "prosaic", "arduous", "candor", "diffident", "enervate", "furtive",
-        "guile", "harangue", "impetuous", "insipid", "maverick", "nadir", "opaque",
-        "placate", "rancor", "surreptitious", "tenuous", "vociferous"
+    // The full GRE list lives in words.json, generated from your PDF by
+    // backend/clean_words.py. It is fetched once, lazily, the first time the
+    // word bank is opened. FALLBACK_WORDS only covers a failed fetch.
+    var FALLBACK_WORDS = [
+        "ephemeral", "ubiquitous", "laconic", "perfunctory", "obdurate",
+        "garrulous", "intransigent", "equivocate", "quixotic", "recalcitrant",
+        "sanguine", "taciturn", "venerate", "abstruse", "belie", "cacophony",
+        "dearth", "ebullient", "fastidious", "gregarious", "hackneyed",
+        "iconoclast", "magnanimous", "obsequious", "paragon", "prosaic",
+        "candor", "furtive"
     ];
+
+    var WORD_BANK = [];
+    var wordsPromise = null;
+    var wordsFailed = false;
+    var activeLetter = null;
+
+    function loadWords() {
+        if (wordsPromise) return wordsPromise;
+
+        wordsPromise = fetch("words.json").then(function (res) {
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            return res.json();
+        }).then(function (list) {
+            WORD_BANK = (Array.isArray(list) ? list : [])
+                .map(function (w) { return String(w).trim().toLowerCase(); })
+                .filter(function (w) { return /^[a-z][a-z'-]{1,24}$/.test(w); });
+
+            if (!WORD_BANK.length) throw new Error("words.json was empty");
+            return WORD_BANK;
+        }).catch(function (err) {
+            // Keep the app usable rather than leaving the panel dead.
+            console.error("Could not load words.json:", err);
+            wordsFailed = true;
+            WORD_BANK = FALLBACK_WORDS.slice();
+            return WORD_BANK;
+        });
+
+        return wordsPromise;
+    }
 
     var STARTERS = [
         { title: "High frequency", words: ["ephemeral", "ubiquitous", "laconic", "candor"] },
@@ -42,7 +71,15 @@
     var form = $("searchForm");
     var input = $("wordInput");
     var learnBtn = $("learnBtn");
-    var randomBtn = $("randomBtn");
+    var wordBankBtn = $("wordBankBtn");
+    var wordBank = $("wordBank");
+    var wbList = $("wbList");
+    var wbLetters = $("wbLetters");
+    var wbSearch = $("wbSearch");
+    var wbCount = $("wbCount");
+    var wbNote = $("wbNote");
+    var wbRandom = $("wbRandom");
+    var wbClose = $("wbClose");
     var errorBox = $("error");
     var resultBox = $("result");
     var skeleton = $("skeleton");
@@ -236,6 +273,112 @@
             });
             chip.appendChild(remove);
             savedChips.appendChild(chip);
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // word bank
+    // ---------------------------------------------------------------
+
+    var MAX_SHOWN = 300;   // cap per view so 1000+ chips never jank the page
+
+    function lettersIn(words) {
+        var seen = {};
+        words.forEach(function (w) { seen[w[0].toUpperCase()] = true; });
+        return Object.keys(seen).sort();
+    }
+
+    function wbMatches() {
+        var q = wbSearch.value.trim().toLowerCase();
+
+        if (q) return WORD_BANK.filter(function (w) { return w.indexOf(q) !== -1; });
+        if (activeLetter) {
+            return WORD_BANK.filter(function (w) {
+                return w[0].toUpperCase() === activeLetter;
+            });
+        }
+        return WORD_BANK;
+    }
+
+    function renderLetters() {
+        clear(wbLetters);
+        // While filtering, letter tabs would fight the search box.
+        if (wbSearch.value.trim()) return;
+
+        lettersIn(WORD_BANK).forEach(function (letter) {
+            wbLetters.appendChild(el("button", {
+                type: "button",
+                className: "letter" + (letter === activeLetter ? " active" : ""),
+                text: letter,
+                role: "tab",
+                "aria-selected": letter === activeLetter ? "true" : "false",
+                onClick: function () {
+                    activeLetter = (activeLetter === letter) ? null : letter;
+                    renderWordBank();
+                }
+            }));
+        });
+    }
+
+    function renderWordBank() {
+        renderLetters();
+
+        var matches = wbMatches();
+        var shown = matches.slice(0, MAX_SHOWN);
+
+        clear(wbList);
+        shown.forEach(function (w) {
+            var chip = wordChip(w);
+            // Picking from the bank should get out of the way of the result.
+            chip.addEventListener("click", closeWordBank);
+            wbList.appendChild(chip);
+        });
+
+        wbCount.textContent = WORD_BANK.length;
+
+        var notes = [];
+        if (wordsFailed) {
+            notes.push("Could not load words.json — showing a short built-in list.");
+        }
+        if (!matches.length) {
+            notes.push("No words match that filter.");
+        } else if (matches.length > shown.length) {
+            notes.push("Showing " + shown.length + " of " + matches.length +
+                       " — keep typing, or pick a letter, to narrow it down.");
+        }
+
+        wbNote.textContent = notes.join(" ");
+        wbNote.hidden = !notes.length;
+    }
+
+    function openWordBank() {
+        wordBank.hidden = false;
+        wordBankBtn.setAttribute("aria-expanded", "true");
+
+        loadWords().then(function () {
+            if (!activeLetter && !wbSearch.value.trim()) {
+                activeLetter = lettersIn(WORD_BANK)[0] || null;
+            }
+            renderWordBank();
+            wbSearch.focus();
+        });
+    }
+
+    function closeWordBank() {
+        wordBank.hidden = true;
+        wordBankBtn.setAttribute("aria-expanded", "false");
+    }
+
+    function randomWord() {
+        loadWords().then(function () {
+            var pool = WORD_BANK.filter(function (w) {
+                return state.recent.indexOf(w) === -1;
+            });
+            if (!pool.length) pool = WORD_BANK;
+            if (pool.length) {
+                closeWordBank();
+                lookup(pool[Math.floor(Math.random() * pool.length)]);
+            }
         });
     }
 
@@ -584,10 +727,29 @@
         lookup(input.value);
     });
 
-    randomBtn.addEventListener("click", function () {
-        var pool = WORD_BANK.filter(function (w) { return state.recent.indexOf(w) === -1; });
-        if (!pool.length) pool = WORD_BANK;
-        lookup(pool[Math.floor(Math.random() * pool.length)]);
+    wordBankBtn.addEventListener("click", function () {
+        if (wordBank.hidden) openWordBank(); else closeWordBank();
+    });
+
+    wbClose.addEventListener("click", closeWordBank);
+    wbRandom.addEventListener("click", randomWord);
+
+    var searchDebounce = null;
+    wbSearch.addEventListener("input", function () {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(function () {
+            if (wbSearch.value.trim()) activeLetter = null;
+            renderWordBank();
+        }, 120);
+    });
+
+    wbSearch.addEventListener("keydown", function (ev) {
+        // Enter looks up the first match straight from the filter box.
+        if (ev.key === "Enter") {
+            ev.preventDefault();
+            var first = wbMatches()[0];
+            if (first) lookup(first);
+        }
     });
 
     clearRecent.addEventListener("click", function () {

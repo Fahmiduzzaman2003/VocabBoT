@@ -79,7 +79,9 @@
                         <span class="btn-label">Learn</span>
                         <span class="spinner" aria-hidden="true"></span>
                     </button>
-                    <button id="randomBtn" type="button" class="btn-ghost" title="Try a random GRE word">Surprise me</button>
+                    <button id="wordBankBtn" type="button" class="btn-ghost"
+                            aria-expanded="false" aria-controls="wordBank"
+                            title="Browse the full GRE word list">Word bank</button>
                 </form>
 
                 <div class="chips-row" id="recentRow" hidden>
@@ -87,6 +89,26 @@
                     <div class="chips" id="recentChips"></div>
                     <button type="button" class="link-btn" id="clearRecent">Clear</button>
                 </div>
+            </section>
+
+            <section class="wordbank" id="wordBank" hidden>
+                <div class="wordbank-head">
+                    <div>
+                        <h2>Word bank</h2>
+                        <p class="wordbank-sub"><span id="wbCount">…</span> GRE words from your list</p>
+                    </div>
+                    <div class="wordbank-actions">
+                        <button type="button" class="btn-ghost small" id="wbRandom">Random word</button>
+                        <button type="button" class="icon-btn" id="wbClose" aria-label="Close word bank">✕</button>
+                    </div>
+                </div>
+
+                <input type="text" id="wbSearch" class="wb-search" spellcheck="false"
+                       placeholder="Filter the word bank…" aria-label="Filter word bank" />
+
+                <div class="letters" id="wbLetters" role="tablist" aria-label="Jump to letter"></div>
+                <div class="chips wordbank-list" id="wbList"></div>
+                <p class="wb-note" id="wbNote" hidden></p>
             </section>
 
             <div id="error" class="alert" role="alert" hidden></div>
